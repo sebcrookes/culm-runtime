@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 #include "memspace.h"
+#include "runtime.h"
 
 /**
  * This main function is only used when running the runtime as a
@@ -27,13 +28,17 @@ int main(void) {
 
     fseek(file, 0, SEEK_SET);
 
-    uint8_t* memory = memspace_init(size, 0x1000);
+    uint8_t* memory = memspace_init(size, 0, 0);
 
     fread((void*) memory, 1, size, file);
 
     fclose(file);
 
-    printf("%s\n", memory);
+    runtime_state_t* runtime = runtime_init(memory, size, 0, 0);
+
+    runtime_step(runtime);
+
+    runtime_step(runtime);
     
     return 0;
 }
