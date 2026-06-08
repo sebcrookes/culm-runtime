@@ -19,3 +19,6 @@ typedef struct {
 runtime_state_t* runtime_init(uint8_t* mem, uint64_t code_size, uint64_t stack_size, uint64_t heap_size);
 
 void runtime_step(runtime_state_t* state);
+
+uint64_t runtime_get_reg(runtime_state_t* state, uint8_t reg);
+void runtime_set_reg(runtime_state_t* state, uint8_t reg, uint64_t val);

@@ -17,8 +17,8 @@ runtime_state_t* runtime_init(uint8_t* mem, uint64_t code_size, uint64_t stack_s
     return runtime;
 }
 
-uint8_t get_register_size(uint8_t size) {
-    switch (size) {
+uint8_t get_register_size(uint8_t reg) {
+    switch (reg >> 6) {
         case 0: return 1;
         case 1: return 2;
         case 2: return 4;
@@ -31,7 +31,17 @@ uint8_t get_register_size(uint8_t size) {
 }
 
 bool is_valid_register(uint8_t reg) {
-    return reg < 32;
+    return (reg & 0b00111111) < 32;
+}
+
+uint64_t get_little_endian_val(runtime_state_t* state, uint8_t size) {
+    uint64_t val = 0;
+
+    for (int i = 0; i < size; i++) {
+        val |= state->mem[state->ip + i] << (8 * i);
+    }
+
+    return val;
 }
 
 void runtime_step(runtime_state_t* state) {
@@ -60,8 +70,7 @@ void runtime_step(runtime_state_t* state) {
                  * into.
                  */
 
-                uint8_t reg_op = state->mem[state->ip];
-                uint8_t reg = reg_op & 0b00111111;
+                uint8_t reg = state->mem[state->ip];
 
                 if (!is_valid_register(reg)) {
                     fprintf(stderr, "Error: Invalid register\n");
@@ -70,14 +79,12 @@ void runtime_step(runtime_state_t* state) {
 
                 state->ip++;
 
-                uint8_t imm_op_size = get_register_size(reg_op >> 6);
+                uint8_t imm_op_size = get_register_size(reg);
 
                 // Writing the operand into the register
-                for (int i = 0; i < imm_op_size; i++) {
-                    ((uint8_t*) &state->regs[reg])[i] = state->mem[state->ip];
+                runtime_set_reg(state, reg, get_little_endian_val(state, imm_op_size));
 
-                    state->ip++;
-                }
+                state->ip += imm_op_size;
             } break;
 
             default: {
@@ -88,5 +95,17 @@ void runtime_step(runtime_state_t* state) {
     } else {
         // Otherwise, this is a 2-byte opcode
 
+    }
+}
+
+uint64_t runtime_get_reg(runtime_state_t* state, uint8_t reg) {
+    return state->regs[reg & 0b00111111];
+}
+
+void runtime_set_reg(runtime_state_t* state, uint8_t reg, uint64_t val) {
+    // Writing the operand into the register
+    uint8_t val_size = get_register_size(reg);
+    for (int i = 0; i < val_size; i++) {
+        ((uint8_t*) &state->regs[reg & 0b00111111])[i] = ((uint8_t*) &val)[i];
     }
 }
