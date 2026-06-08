@@ -12,7 +12,7 @@ int main(void) {
     if (retv == 0) {
         printf("[Test] - All unit tests passed.\n");
     } else {
-        fprintf(stderr, "[Test] - One or more unit tests failed.\n");
+        printf("[Test] - One or more unit tests failed.\n");
     }
 
     return retv;
